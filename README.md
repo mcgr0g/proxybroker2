@@ -381,6 +381,10 @@ Contributing
 -   Submit a pull request!
 -   [Contributor workflow](https://github.com/bluet/proxybroker2/issues/93)
 
+### Dev tool on Windows
+In one step: with VS Code just clone project into WSL2 and agree to reopen it in [Dev Containder](https://code.visualstudio.com/learn/develop-cloud/containers).
+Now try application `poetry run proxybroker --log INFO find --types SOCKS5 --lvl High --countries US UK DE FR NL --strict -l 10`
+
 License
 -------
 
