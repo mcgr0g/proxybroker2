@@ -385,6 +385,13 @@ Contributing
 In one step: with VS Code just clone project into WSL2 and agree to reopen it in [Dev Containder](https://code.visualstudio.com/learn/develop-cloud/containers).
 Now try application `poetry run proxybroker --log INFO find --types SOCKS5 --lvl High --countries US UK DE FR NL --strict -l 10`
 
+NB: to build your own image you have to switch to usual WSL. Then use Build tool on linux
+
+
+### Build tools on linux
+prerequisites: [buildx](https://docs.docker.com/build/install-buildx/)
+just try `make build`, `make example` and `make push`
+
 License
 -------
 
