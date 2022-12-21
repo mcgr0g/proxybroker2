@@ -1,13 +1,15 @@
-ARG PY_IMG_VARIANT=3.9-bullseye
+ARG PY_VARIANT=3.8
+ARG PY_IMG_VARIANT=slim
 ARG POETRY_VARIANT=1.3.1
-# `builder-base` stage is used to build deps + create our virtual environment
-FROM python:${PY_IMG_VARIANT} as base
+# `builder-base-python-base` stage is used to build deps + create our virtual environment
+FROM python:${PY_VARIANT}-${PY_IMG_VARIANT} as python-base
 
 ARG IMG_VER
 ARG BUILD_DATE
 ARG APP_NAME=""
 ARG OWNER_NAME=""
-LABEL org.opencontainers.image.authors="Ronnie McGrog" \
+# https://github.com/opencontainers/image-spec
+LABEL org.opencontainers.image.authors="Matthew Lien, Ronnie McGrog" \
       org.opencontainers.image.url="https://github.com/${OWNER_NAME}/${APP_NAME}" \
       org.opencontainers.image.documentation="https://github.com/${OWNER_NAME}/${APP_NAME}/blob/master/README.md" \
       org.opencontainers.image.source="https://github.com/${OWNER_NAME}/${APP_NAME}/blob/master/Dockerfile" \
@@ -31,17 +33,20 @@ ENV \
     POETRY_NO_INTERACTION=1 \
     # make poetry create the virtual environment
     POETRY_VIRTUALENVS_CREATE=true \
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
     # make poetry install to this location
     POETRY_HOME="/opt/poetry" \
     # paths
-    PYSETUP_PATH="/opt/pysetup"  \
-    VENV_PATH="/opt/pysetup/.venv"
+    PYSETUP_PATH="/opt/pysetup" \
+    POETRY_VIRTUALENVS_PATH="/opt/pysetup/.venv"
 
-ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
+# this is activate venv, no need `. $POETRY_VIRTUALENVS_PATH/bin/activate`
+ENV PATH="$POETRY_HOME/bin:$POETRY_VIRTUALENVS_PATH/bin:$PATH"
 
-FROM base as builder
+FROM python-base as builder-base
 
-RUN apt-get update \
+RUN export DEBIAN_FRONTEND=noninteractive\
+    && apt-get update \
     && apt-get install --no-install-recommends -y \
         # deps for installing poetry
         curl \
@@ -53,10 +58,13 @@ RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/inst
 
 WORKDIR $PYSETUP_PATH
 COPY poetry.lock pyproject.toml ./
+RUN poetry install --without dev
 
-RUN poetry install --no-ansi --no-dev
-
+FROM python-base as production
+WORKDIR $PYSETUP_PATH
+# copy venv too
+COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
 COPY ./proxybroker proxybroker
 EXPOSE 8888
-
-ENTRYPOINT ["poetry", "run", "python", "-m", "proxybroker" ]
+# venv is activated, so all requirements are available
+ENTRYPOINT ["python", "-m", "proxybroker"]

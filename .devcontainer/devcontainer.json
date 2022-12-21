@@ -6,7 +6,7 @@
 		"dockerfile": "Dockerfile",
 		"context": "..",
 		"args": { 
-			"PY_IMG_VARIANT": "3.8-bullseye",
+			"PY_IMG_VARIANT": "3.8-slim",
 			"POETRY_VARIANT": "1.3.1"
 		}
 	},
